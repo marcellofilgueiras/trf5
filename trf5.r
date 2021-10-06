@@ -2,21 +2,6 @@
 # Marcello Silveira Filgueiras
 
 
-# Coment?rios Iniciais ----------------------------------------------------
-
-#Olá sou Marcello Filgueiras, fa?o Direito na UFJF e me interesso por Jurimetria.
-# O objetivo desse scrapper a baixar a jurisprud?ncia, o conjunto de julgados, do TRF-5, o Tribunal Regional Federal do Nordeste,
-# dispon?veis nesse [buscador de julgados](https://julia-pesquisa.trf5.jus.br/julia-pesquisa/#consulta)
-
-#Trata-se de um buscador de julgados que vai te retornar julgados a partor de 
-#uma pesquisa em texto, possibilitando de filtrar por Org?o Julgador, por Relator
-#que redigiu o ac?d?o ou por per?odo de tempo.
-#ainda, ? poss?vel buscar diretamente o julgado com o n?mero do processo espec?fico.
-
-
-# Apesar de parecer uma requisi??o POST o site tem uma API escondida que utiliza requisi??es GET.
-# Os dados v?m em Json , o que possibilita muito menos trabalho no parsing.
-
 library(tidyverse)
 library(httr)
 library(abjutils)
@@ -27,17 +12,16 @@ library(jsonlite)
 
 # Vamos descobrir como a API funciona.
 
-# Aqui est? a URL base.
+# Aqui está a URL base.
 
 url_base <- "https://julia-pesquisa.trf5.jus.br/julia-pesquisa/api/documentos:dt?"
 
 
-###### Teste Super Espec?fico 
-
-# Ao fazer uma pesquisa na Jurisprudência pelo texto de "28,86%" em refer?ncia a uma tese consolidada
+###### Teste Super Específico 
+# Ao fazer uma pesquisa na Jurisprudência pelo texto de "28,86%" em referência a uma tese consolidada
 # sobre direito aumento de sal?rios de professores federais no montante de 28,86%,
-# do Relator Alcides Saldanha Lima, da 3? Turma recursal, num espa?o de 10 anos,
-# estes s?o os par?metros que retornam do navegador:
+# do Relator Alcides Saldanha Lima, da 3ª Turma recursal, num espaço de 10 anos,
+# estes são os parâmetros que retornam do navegador:
 
 query_teste_especifico<- list(
   "draw" = "1",
@@ -59,8 +43,8 @@ query_teste_especifico<- list(
   "dataFim" = "03/10/2021",
   "_" = "1633297312330")
 
-# Podemos ver ent?o que de in?cio, todos os itens de interesse para pesquisa
-#estão bem definidos nos seguintes par?meteros:
+# Podemos ver então que, de inpicio, todos os itens de interesse para pesquisa
+#estão bem definidos nos seguintes parameteros:
 
 #"pesquisaLivre" = "28,86%",
 #"numeroProcesso" = "",
@@ -80,7 +64,7 @@ content(teste_especifico) %>%
 # Mas o que tem dentro dessas listas?
 # O que fazem as outras querys?
 
-#Poder?amos saber, mas essa busca retornou apenas um julgado.
+#Poderíamos saber, mas essa busca retornou apenas um julgado.
 # Vamos para quantidades maiores com uma requisição mais genérica.
 
 
@@ -148,7 +132,7 @@ join <- full_join(teste4, teste5)%>%
 
 
 
-# Vamos Criando a Fun??o!
+# Vamos Criando a Função!
 
 trf5_baixar_cjsg <- function(pesquisa_livre = "", orgao_julgador = "",
                              relator = "", data_inicial = "", data_final = "",
@@ -218,8 +202,8 @@ trf5_baixar_cjsg <- function(pesquisa_livre = "", orgao_julgador = "",
 }
 
 
-trf5_baixar_cjsg(pesquisa_livre = "28,86%",
-                 diretorio = "data_raw")
+#trf5_baixar_cjsg(pesquisa_livre = "28,86%",
+ #                diretorio = "data_raw")
 
 
 
@@ -227,11 +211,15 @@ trf5_baixar_cjsg(pesquisa_livre = "28,86%",
 # Lendo e Iterando -------------------------------------------------------------------
 
 
-julgados_28<- map_df( .x= list.files("data_raw/",
+trf5_ler_cjsg <- function(diretorio= ""){
+  
+  map_df( .x= list.files(paste0(diretorio,"/"),
                      pattern = "\\.json$", 
                       full.names = TRUE),
                   .f = ~ jsonlite::fromJSON (.x, simplifyDataFrame = TRUE )%>%
                           pluck("data"))
+}
 
 
 #FUNCIONOU CARALHOOOOOOOOOOOOOOOOOOOOOOO
+#Fazendo exemplo em outro código
