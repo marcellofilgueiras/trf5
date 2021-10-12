@@ -1,3 +1,4 @@
+
 # Scrapper TRF-5
 # Marcello Silveira Filgueiras
 
@@ -19,7 +20,7 @@ url_base <- "https://julia-pesquisa.trf5.jus.br/julia-pesquisa/api/documentos:dt
 
 ###### Teste Super Específico 
 # Ao fazer uma pesquisa na Jurisprudência pelo texto de "28,86%" em referência a uma tese consolidada
-# sobre direito aumento de sal?rios de professores federais no montante de 28,86%,
+# sobre direito aumento de salários de professores federais no montante de 28,86%,
 # do Relator Alcides Saldanha Lima, da 3ª Turma recursal, num espaço de 10 anos,
 # estes são os parâmetros que retornam do navegador:
 
@@ -111,18 +112,18 @@ content(teste_generico)%>%
 
 httr::GET(url_base,
           query= query_teste_generico,
-          httr::write_disk("data_raw/teste7.json", overwrite = TRUE))
+          httr::write_disk("data_raw/teste/teste7.json", overwrite = TRUE))
 
 
 # query start = 0
-teste4 <- jsonlite::read_json("data_raw/teste4.json", simplifyDataFrame=TRUE) %>%
+teste4 <- jsonlite::read_json("data_raw/teste/teste4.json", simplifyDataFrame=TRUE) %>%
   pluck("data")
 # query start = 10
-teste5 <- jsonlite::read_json("data_raw/teste5.json", simplifyDataFrame=TRUE) %>%
+teste5 <- jsonlite::read_json("data_raw/teste/teste5.json", simplifyDataFrame=TRUE) %>%
   pluck("data")
 
 # query start = 20
-teste6 <- jsonlite::read_json("data_raw/teste6.json", simplifyDataFrame=TRUE) %>%
+teste6 <- jsonlite::read_json("data_raw/teste/teste6.json", simplifyDataFrame=TRUE) %>%
   pluck("data")
 
 
@@ -167,9 +168,13 @@ trf5_baixar_cjsg <- function(pesquisa_livre = "", orgao_julgador = "",
 
  n_starts <- seq(0,n_observacoes,10)
  
+ barra_progresso <- progress::progress_bar $ new(total = length(n_starts))
  
  purrr::map(.x= n_starts,
-            ~httr::GET(url_base,
+            ~{
+              barra_progresso$tick()
+              
+              httr::GET(url_base,
                        query= list(
                          "draw" = "1",
                          "columns[0][data]" = "codigoDocumento",
@@ -188,22 +193,23 @@ trf5_baixar_cjsg <- function(pesquisa_livre = "", orgao_julgador = "",
                          "relator" = relator,
                          "dataIni" = data_inicial,
                          "dataFim" = data_final),
-            write_disk(path = paste0(diretorio, 
+            httr::write_disk(path = paste0(diretorio, 
                                     "/",
                                    "julgados_",
                                   as.character(.x),
                                  "_",
                                 Sys.time()%>%
-                                 str_replace_all("\\D","_"),
+                                 stringr::str_replace_all("\\D","_"),
                               ".json"))
-            ))
+            )}
+              )
            
  
 }
 
 
-#trf5_baixar_cjsg(pesquisa_livre = "28,86%",
- #                diretorio = "data_raw")
+trf5_baixar_cjsg(pesquisa_livre = "28,86%",
+                diretorio = "data_raw/teste")
 
 
 
@@ -213,12 +219,22 @@ trf5_baixar_cjsg <- function(pesquisa_livre = "", orgao_julgador = "",
 
 trf5_ler_cjsg <- function(diretorio= ""){
   
-  map_df( .x= list.files(paste0(diretorio,"/"),
-                     pattern = "\\.json$", 
-                      full.names = TRUE),
-                  .f = ~ jsonlite::fromJSON (.x, simplifyDataFrame = TRUE )%>%
-                          pluck("data"))
+  arquivos <- base::list.files(paste0(diretorio,"/"),
+                   pattern = "\\.json$", 
+                   full.names = TRUE) 
+  
+  barra_progresso <- progress::progress_bar $ new(total = length(arquivos))
+  
+  purrr::map_df( .x= arquivos,
+                  .f = ~{
+                    barra_progresso$tick()
+                    
+                    jsonlite::fromJSON (.x, simplifyDataFrame = TRUE )%>%
+                   purrr::pluck("data")
+                    })
 }
+
+
 
 
 #FUNCIONOU CARALHOOOOOOOOOOOOOOOOOOOOOOO
