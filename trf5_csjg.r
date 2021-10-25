@@ -235,7 +235,3 @@ trf5_ler_cjsg <- function(diretorio= ""){
 }
 
 
-
-
-#FUNCIONOU CARALHOOOOOOOOOOOOOOOOOOOOOOO
-#Fazendo exemplo em outro código
