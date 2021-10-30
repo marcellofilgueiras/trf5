@@ -1,4 +1,4 @@
-# Buscador Precatórios
+# Buscando Metadaos dos Precatórios
 # Autor: Marcello Silveira Filgueiras
 
 
@@ -7,26 +7,6 @@ library(httr)
 library(xml2)
 library(rvest)
 library(lubridate)
-
-#Lista de Julgados
-
-adufb_processos_raw <- readxl::read_excel("cpopg/data_raw/adufb_processos.xlsx", 
-                              skip = 3)
-
-
-adufb_processos_tidy <- adufb_processos_raw %>%
-  janitor::clean_names() %>%
-  tidyr::fill(c(qtd, processo_execucao, situacao),
-              .direction = "down")%>%
-  tidyr::drop_na() %>%
-  mutate(across(.cols = c(qtd:precatorio_rpv),
-                .fns = stringr::str_squish))
-
-processos_precatorios_ind <- adufb_processos_tidy %>%
-  pull(processo_precatorio_rpv)
-
-processos_precatorios_col <- adufb_processos_tidy %>%
-  pull(processo_execucao) %>% unique()
 
 
 # Baixando e Iterando -----------------------------------------------------
@@ -283,88 +263,6 @@ a<- trf5_cpopg_ler_processos(diretorio = "cpopg/data_raw")
   }
 
 
-
-# Contando 2020 -----------------------------------------------------------
-
-
-
-c <- trf5_cpopg_ler_movimentacoes (diretorio = "cpopg/data_raw")  %>%
-  JurisMiner::tempo_movimentacao(data = data_movimentacao)
-
-
-                             
-#Classificando Movimentações                         
-                                 
- c2 <- c %>%
-  dplyr::mutate(data_inicial = case_when(
-    is.na(anterior) ~ data_movimentacao
-  )) %>%
-    tidyr::fill(data_inicial,
-                .direction= "up") %>% 
-      mutate(tipo_movimentacao =case_when(
-              str_detect(movimentacao, "(?i)individualiza[çc][ãa]o") ~ "Cadastro do Precatório",
-              str_detect(movimentacao, "(?i)arquivad") ~ "Arquivado",
-              str_detect(movimentacao, "(?i)atualiza[cç][aã]o") ~ "Atualização de Valores",
-              str_detect(movimentacao, "(?i)dep[oó]sito em conta|(?i)dep[oó]sito efetivado") ~ "Depósito dos Valores",
-              str_detect(movimentacao, "(?i)atualiza[cç][aã]o") ~ "Atualização de Valores",
-              str_detect(movimentacao, "(?i)instituição") ~ "Indicação do banco para pagamento",
-              str_detect(movimentacao, "(?i)exclus[ãa]o|excluir") ~ "Exclusão da Restrição",
-              #str_detect(movimentacao, "(?i)expedição de ofício") ~ "Expedição de Ofício",
-              str_detect(movimentacao, "(?i)pagamento em processamento") ~ "Pagamento em Processamento",
-              str_detect(movimentacao, "Precatório foi inscrito para pagamento em 2021") ~ "Inscrito para Pagamento em 2021",
-              str_detect(movimentacao, "(?i)precatório sera inscrito para pagto em 2022") ~ "Inscrito para Pagamento em 2022"),
-        mes_inicial= lubridate::month(data_inicial),
-        ano_inicial= lubridate::year(data_inicial),
-        md_inicial= as.character(data_inicial)%>% 
-          stringr::str_replace("\\d{2,2}$", "01") %>%
-          lubridate::ymd()
-      )
- 
- 
- 
-
- 
- 
- # Contanto por Ano --------------------------------------------------------
- 
- 
- count_c2 <- c2%>%
-   tidyr::unite(mes_inicial, ano_inicial, sep = "-") %>%
-   group_by(tipo_movimentacao,
-            md_inicial) %>%
-   summarise(media_ultima_mov_inic = mean(decorrencia_acumulada) )%>%
-   arrange(desc(media_ultima_mov_inic))
- 
- count_c2 %>%
-   filter(md_inicial == "2020-06-01" )
- 
- count_c2 %>%
-   filter(md_inicial == "2020-07-01" )
- 
- count_c2 %>%
-   filter(md_inicial == "2021-02-01" )
- 
- 
- # Últimas Movimentações
-                                 
-c3 <- c2 %>%
-  group_by(processo) %>%
-  filter(decorrencia_acumulada == max(decorrencia_acumulada)) %>%
-  distinct(processo, .keep_all = TRUE) %>%
-  ungroup(processo)
-
-
-
-
-c3 %>%
-  group_by(#tipo_movimentacao,
-           md_inicial) %>%
-  summarise(media_ultima_mov_inic = mean(decorrencia_acumulada) )%>%
-  arrange(desc(media_ultima_mov_inic))
-
-c3%>%
-  count(md_inicial)
-
   
 # # Lendo e Iterando: Partes do Processo ----------------------------------
 
@@ -427,17 +325,3 @@ b<-  trf5_cpopg_ler_partes(diretorio = "cpopg/data_raw")
 
 b $ partes  
 
-
-
-# Exportando --------------------------------------------------------------
-
-writexl::write_xlsx(list(a,b,c2,c3),
-                    "cpopg/exports/precatorios_2020.xlsx")
-
-library(xlsx)
-
-openxlsx::write.xlsx(list(a,b,c2,c3),
-                     "cpopg/exports/precatorios_2020_2.xlsx",
-                     asTable = FALSE,
-                 sheetName= c("Processos", "Partes", "Movimentações", "Últimas Movimentações"),
-                 overwrite = TRUE)
