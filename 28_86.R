@@ -11,6 +11,24 @@ library(tidyverse)
 
 # Lendo -------------------------------------------------------------------
 
+
+trf5_ler_cjsg <- function(diretorio= ""){
+  
+  arquivos <- base::list.files(paste0(diretorio,"/"),
+                               pattern = "\\.json$", 
+                               full.names = TRUE) 
+  
+  barra_progresso <- progress::progress_bar $ new(total = length(arquivos))
+  
+  purrr::map_df( .x= arquivos,
+                 .f = ~{
+                   barra_progresso$tick()
+                   
+                   jsonlite::fromJSON (.x, simplifyDataFrame = TRUE )%>%
+                     purrr::pluck("data")
+                 })
+}
+
 julgados_28_raw <- trf5_ler_cjsg(diretorio= "cjsg/data_raw") %>%
   janitor::clean_names()
 
@@ -67,31 +85,30 @@ julgados_28_tidy %>%
          data_julgamento,
          autuacao_julgamento,
          ementa
-         ) %>% view()
-
-
-  glimpse()
+         ) %>%
+  view()
 
 
 julgados_28_tidy %>%
   count(classe_judicial)
 
-julgados_28_tidy %>% 
-  group_by(classe_judicial) %>%
-  summarise(median(data_julgamento - data_autuacao, na.rm = TRUE),
-            mean(data_julgamento - data_autuacao, na.rm = TRUE)) %>%
-  rename("mediana julgamento - autuacao" =2,
-         "média julgamento - autuacao" = 3)
-
 
 julgados_28_tidy %>%
-  count(ano_julgamento)%>%
-  mutate(ano_julgamento= as.Date(ano_julgamento))
+  count(ano_julgamento)#%>%  mutate(ano_julgamento= as.Date(ano_julgamento))
+
+julgados_28_tidy %>% 
+  group_by(classe_judicial) %>%
+  summarise(mediana_julgamento = median(autuacao_julgamento, na.rm = TRUE),
+            iqr_julgamento = IQR(autuacao_julgamento, na.rm = TRUE),
+            media_julgamento = mean(autuacao_julgamento, na.rm = TRUE),
+            desvio_pad_julgamento= sd(autuacao_julgamento, na.rm= TRUE)
+            )
+
 
 
 # Visualização ------------------------------------------------------------
 
-# Todos Porcessos por Data de Julgamento
+# Todos Processos Tipos de julgados agrupados por Data de Julgamento
 
 julgados_28_tidy%>%
   #filter(ano_julgamento>2015) %>%
@@ -107,36 +124,39 @@ julgados_28_tidy%>%
   scale_y_continuous(name= "Nº de Julgados")
 
 
-# Histogramas
+# Tempo do Processo em Histogramas
+
+
+tempo_julg<- julgados_28_tidy %>% 
+  #contando
+  group_by(classe_judicial ) %>%
+  summarise(autuacao_julgamento) 
 
 # Histograma duração das Ações Rescisórias
 
-julgados_28_tidy %>%  
-  group_by(classe_judicial ) %>% 
-  summarise(data_julgamento - data_autuacao) %>% 
+ tempo_julg %>% 
   filter(classe_judicial == "Ação Rescisória") %>% 
-  ggplot(aes(x= `data_julgamento - data_autuacao`)) + 
+  ggplot(aes(x= autuacao_julgamento)) + 
   geom_histogram( fill= "blue", color= "black") + 
   ylab(label= "Número de Processos")+
   xlab(label= "Dias entre a Data de Julgamento e a Data de Autuação do Recurso") +
   scale_x_continuous(breaks = c(0,  180,  seq(365,6000, 365) ) ) +
   labs (title = "Efeito da Interposição do Recurso: Número de Dias da sua Autuação até o Julgamento",
-        subtitle = "Nas Ações Rescisórias, a mediana desses números é de 495 dias. A média, 600 dias.")+
-  theme_update()
+        subtitle = "Nas Ações Rescisórias, a mediana desses números é de 495 dias, na linha de vermelho. A média, na linha de verda, é de 600 dias.")+
+  theme_update() +
+  geom_vline(aes(xintercept = median(autuacao_julgamento, na.rm = TRUE)),col='red', size= 1.2) +
+   geom_vline(aes(xintercept = mean(autuacao_julgamento, na.rm = TRUE)),col='green', size= 1.2)
 
 
 
-
-#hist mais desnsity
-julgados_28_tidy %>% 
-  group_by(classe_judicial ) %>%
-  summarise(data_julgamento - data_autuacao) %>%
+#Hist mais desnsity
+tempo_julg %>%
   filter(classe_judicial == "Ação Rescisória"
-        # , `data_julgamento - data_autuacao`>= -1
+        # , autuacao_julgamento>= -1
          ) %>% 
-  ggplot(aes(x= `data_julgamento - data_autuacao`)) +
+  ggplot(aes(x= autuacao_julgamento)) +
   geom_histogram( aes(y = ..density..), color= "black") +
-  geom_density(fill= "blue", alpha= 0.2)+
+  geom_density(fill= "blue", alpha = 0.7) +
   ylab(label= "Número de Processos") +
   xlab(label= "Dias entre a Data de Julgamento e a Data de Autuação do Recurso") +
   #scale_x_continuous(breaks = c(0,  180,  seq(365,6000, 365) ) ) +
@@ -147,15 +167,12 @@ julgados_28_tidy %>%
 # Histograma facetado por tipo de Ação
 
 # Histograma duração das Ações Rescisórias
-tempo_julg<- julgados_28_tidy %>% 
-  #contando
-  group_by(classe_judicial ) %>%
-  summarise(data_julgamento - data_autuacao) %>%
- filter(`data_julgamento - data_autuacao` <=10000)
+
 
 tempo_julg%>%
+  filter(autuacao_julgamento <=10000) %>%
   #visualizando
-  ggplot(aes(x= `data_julgamento - data_autuacao`)) +  
+  ggplot(aes(x= autuacao_julgamento)) +  
   geom_histogram( fill= "blue", color= "grey10") +
   facet_wrap( facets = vars(classe_judicial))+
   ylab(label= "Número de Processos") +
@@ -167,13 +184,12 @@ tempo_julg%>%
 
 # Histograma duração dos processos
 julgados_28_tidy %>% 
-  filter(classe_judicial == "Ação Rescisória") %>%
+  filter(classe_judicial == "Ação Rescisória" &
+           ano_julgamento>2013) %>%
   group_by(ano_julgamento) %>%
-  filter(ano_julgamento > 2013) %>%
-  summarise(data_julgamento - data_autuacao) %>%
-  ggplot(aes(x= `data_julgamento - data_autuacao`, fill= ano_julgamento)) +
+  summarise(autuacao_julgamento) %>%
+  ggplot(aes(x= autuacao_julgamento, fill= ano_julgamento)) +
                geom_histogram(color= "black") +
-  scale_fill_discrete() +
   ylab(label= "Número de Processos") 
 # Tipo de Julgado por ano
 
@@ -187,3 +203,6 @@ julgados_28_tidy %>%
  #        data_julgamento, data_autuacao, ementa) %>%
   #DT::datatable(extensions = "Responsive",
    #             filter = "top")
+
+  
+  
