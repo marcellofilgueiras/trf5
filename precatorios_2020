@@ -1,5 +1,8 @@
-#Usa a função trf_cpo_fisico para analisar processos específicos dos precatórios
-#Autor: Marcello Filgueiras
+# Análise Precatórios
+
+# Precatórios
+# Autor: Marcello Silveira Filgueiras
+
 
 library(tidyverse)
 library(httr)
@@ -33,7 +36,7 @@ processos_precatorios_col <- adufb_processos_tidy %>%
 
 
 
-trf5_baixar_cpopg <- function(processos = "",
+trf5_baixar_cpo_fisico <- function(processos = "",
                               diretorio= "") {
   
   url_base <- "https://cp.trf5.jus.br/processo/"
@@ -67,15 +70,15 @@ trf5_baixar_cpopg <- function(processos = "",
 #trf5_baixar_cpopg(processos = processos_precatorios_ind,
 #                diretorio = "cpopg/data_raw")
 
-trf5_baixar_cpopg(processos = processos_precatorios_col,
-                  diretorio = "cpopg/data_raw/exec_coletivas")
+#trf5_baixar_cpo_fisico(processos = processos_precatorios_col,
+ #                 diretorio = "cpopg/data_raw/exec_coletivas")
 
 
 # Lendo e Iterando: Dados do Processo -------------------------------------
 
 
 
-trf5_cpopg_ler_processos <- function(diretorio= "") {
+trf5_cpo_fisico_ler_processos <- function(diretorio= "") {
   
   # Faça a lista de Arquivos presente na pasta
   arquivos_lista <-   base::list.files(paste0(diretorio,"/"),
@@ -207,7 +210,7 @@ trf5_cpopg_ler_processos <- function(diretorio= "") {
 
 
 
-a<- trf5_cpopg_ler_processos(diretorio = "cpopg/data_raw")
+a<- trf5_cpo_fisico_ler_processos(diretorio = "cpopg/data_raw")
 
 
 
@@ -220,7 +223,7 @@ a<- trf5_cpopg_ler_processos(diretorio = "cpopg/data_raw")
 
 
 
-trf5_cpopg_ler_movimentacoes <- function(diretorio= "") {
+trf5_cpo_fisico_ler_movimentacoes <- function(diretorio= "") {
   
   # Faça a lista de Arquivos presente na pasta
   arquivos_lista <-   base::list.files(paste0(diretorio,"/"),
@@ -258,7 +261,7 @@ trf5_cpopg_ler_movimentacoes <- function(diretorio= "") {
                     
                     
                     movimentacoes <- arquivos_raw %>%
-                      xml2::xml_find_all("//table[@width= '87%']")%>%
+                      xml2::xml_find_all("//table[@height= '28']")%>%
                       xml2::xml_text() 
                     
                     tibble(processo,
@@ -290,7 +293,7 @@ trf5_cpopg_ler_movimentacoes <- function(diretorio= "") {
 
 
 
-c <- trf5_cpopg_ler_movimentacoes (diretorio = "cpopg/data_raw")  %>%
+c <- trf5_cpo_fisico_ler_movimentacoes (diretorio = "cpopg/data_raw")  %>%
   JurisMiner::tempo_movimentacao(data = data_movimentacao)
 
 
@@ -363,7 +366,7 @@ data_02<- count_c2 %>%
               aes( y= dias_desde_inicio, x = data_media_ultimo_despacho, colour= "red")) +
     geom_line( data = data_07,
                aes( y= dias_desde_inicio, x = data_media_ultimo_despacho, colour= "blue")) +
-    geom_line( data = data_08,
+    geom_line( data = data_02,
                aes( y= dias_desde_inicio, x = data_media_ultimo_despacho, colour= "green"))
 
   count_c2 %>%
@@ -402,6 +405,7 @@ count_c3 <- c3%>%
 # VisualizandoTempo------------------------------------------------------------
 
   #visualizando
+c3 %>%
   ggplot(aes(x= decorrencia_acumulada)) +  
   geom_histogram( fill= "blue", color= "grey10") +
   facet_grid( facets = vars(md_inicial))+
@@ -416,7 +420,7 @@ count_c3 <- c3%>%
 
 
 
-trf5_cpopg_ler_partes <- function(diretorio= "") {
+trf5_cpo_fisico_ler_partes <- function(diretorio= "") {
   
   # Faça a lista de Arquivos presente na pasta
   arquivos_lista <-   base::list.files(paste0(diretorio,"/"),
@@ -468,7 +472,7 @@ trf5_cpopg_ler_partes <- function(diretorio= "") {
 }
 
 
-b<-  trf5_cpopg_ler_partes(diretorio = "cpopg/data_raw")  
+b<-  trf5_cpo_fisico_ler_partes(diretorio = "cpopg/data_raw")  
 
 b $ partes  
 
