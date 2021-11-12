@@ -105,30 +105,29 @@ content(teste_generico)%>%
 # Baixando e Iterando -----------------------------------------------------
 
 
-# Testes que deram certo para acessar a API (antes de fazer a fun??o)
+# Testes que deram certo para acessar a API (antes de fazer a função)
 
-# Usar o Par?metro Draw ? fundamental, sem ele n?o ? poss?vel, retorna o seguinte erro:
+# Usar o Parâmetro Draw fundamental, sem ele não possível, retorna o seguinte erro:
 #"{"status":400,"mensagem":"Required long parameter 'draw' is not present"}"
-
-httr::GET(url_base,
-          query= query_teste_generico,
-          httr::write_disk("data_raw/teste/teste7.json", overwrite = TRUE))
 
 
 # query start = 0
-teste4 <- jsonlite::read_json("data_raw/teste/teste4.json", simplifyDataFrame=TRUE) %>%
-  pluck("data")
+teste4 <- jsonlite::read_json("cjsg/data_raw/teste/teste4.json",
+                              simplifyDataFrame=TRUE) %>%
+                            pluck("data")
 # query start = 10
-teste5 <- jsonlite::read_json("data_raw/teste/teste5.json", simplifyDataFrame=TRUE) %>%
-  pluck("data")
+teste5 <- jsonlite::read_json("cjsg/data_raw/teste/teste5.json",
+                              simplifyDataFrame=TRUE) %>%
+                            pluck("data")
 
 # query start = 20
-teste6 <- jsonlite::read_json("data_raw/teste/teste6.json", simplifyDataFrame=TRUE) %>%
-  pluck("data")
+teste6 <- jsonlite::read_json("cjsg/data_raw/teste/teste6.json",
+                              simplifyDataFrame=TRUE) %>%
+                            pluck("data")
 
 
 
-join <- full_join(teste4, teste5)%>%
+join <- full_join(teste4, teste5) %>%
   full_join(teste6)
 
 
@@ -208,8 +207,8 @@ trf5_baixar_cjsg <- function(pesquisa_livre = "", orgao_julgador = "",
 }
 
 
-trf5_baixar_cjsg(pesquisa_livre = "28,86%",
-                diretorio = "data_raw/teste")
+#trf5_baixar_cjsg(pesquisa_livre = "28,86%",
+ #               diretorio = "data_raw/teste")
 
 
 
@@ -233,5 +232,4 @@ trf5_ler_cjsg <- function(diretorio= ""){
                    purrr::pluck("data")
                     })
 }
-
 
