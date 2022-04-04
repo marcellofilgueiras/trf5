@@ -2,9 +2,9 @@
 
 Neste projeto está presente um WebScrapper construído para baixar decisões do TRF5 e fazer estatísticas com as informações disponíveis online.
 
-Foi construído tanto para razões profissionais, mas compartilho com a comunidade o trabalho realziado, especialmente por ser um trabalho para Conclusão do Curso de Web Scrapping da CursoR.
+Foi construído tanto para razões profissionais, mas compartilho com a comunidade o trabalho realizado, especialmente por ser um trabalho para Conclusão do Curso de Web Scrapping da CursoR.
 
-Consulte o Markdown ao ado que explico como foram criadas as funções;
+Consulte o Markdown na parte de Releases (à direita) ado que explico como foram criadas as funções.
 
 No arquivo **trf5.R** estão alguns testes inicias para baixar a jurisprudência dos julgados. Desconsidere.\n
 No **trf5_cjsg.r** estão as função de baixar a jurisprudência e  **28_86.r** e sua aplicação.\n
